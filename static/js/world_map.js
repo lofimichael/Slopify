@@ -21,61 +21,61 @@ let chosenCityIds = [];
 let mapOverlay = null;
 
 document.addEventListener("DOMContentLoaded", () => {
-  mapOverlay = document.getElementById("mapOverlay");
-  const cityInput = document.getElementById("cityInput");
-  const suggestions = document.getElementById("suggestions");
+	mapOverlay = document.getElementById("mapOverlay");
+	const cityInput = document.getElementById("cityInput");
+	const suggestions = document.getElementById("suggestions");
 
-  // Load any previously chosen city IDs from localStorage
-  const stored = localStorage.getItem("chosenCityIds");
-  if (stored) {
-    chosenCityIds = JSON.parse(stored);
-  }
+	// Load any previously chosen city IDs from localStorage
+	const stored = localStorage.getItem("chosenCityIds");
+	if (stored) {
+		chosenCityIds = JSON.parse(stored);
+	}
 
-  // Fetch the local cities.json once
-  fetch("data/cities.json")
-    .then((resp) => resp.json())
-    .then((data) => {
-      citiesData = data;
-      // Draw markers for previously chosen cities
-      chosenCityIds.forEach((cityId) => drawCityMarker(cityId));
-    })
-    .catch((err) => console.error("Error loading cities.json:", err));
+	// Fetch the local cities.json once
+	fetch("data/cities.json")
+		.then((resp) => resp.json())
+		.then((data) => {
+			citiesData = data;
+			// Draw markers for previously chosen cities
+			chosenCityIds.forEach((cityId) => drawCityMarker(cityId));
+		})
+		.catch((err) => console.error("Error loading cities.json:", err));
 
-  /**
-   * Setup the auto-suggest logic:
-   */
-  let typingTimer;
-  cityInput.addEventListener("input", () => {
-    clearTimeout(typingTimer);
-    const query = cityInput.value.trim().toLowerCase();
+	/**
+	 * Setup the auto-suggest logic:
+	 */
+	let typingTimer;
+	cityInput.addEventListener("input", () => {
+		clearTimeout(typingTimer);
+		const query = cityInput.value.trim().toLowerCase();
 
-    if (!query) {
-      suggestions.innerHTML = "";
-      return;
-    }
+		if (!query) {
+			suggestions.innerHTML = "";
+			return;
+		}
 
-    // Debounce: only do the filter after 200 ms of no typing
-    typingTimer = setTimeout(() => {
-      showSuggestions(query);
-    }, 200);
-  });
+		// Debounce: only do the filter after 200 ms of no typing
+		typingTimer = setTimeout(() => {
+			showSuggestions(query);
+		}, 200);
+	});
 
-  // If user presses Enter, optionally pick the top suggestion
-  cityInput.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") {
-      const firstLi = suggestions.querySelector("li");
-      if (firstLi) {
-        pickSuggestion(firstLi.dataset.cityId);
-      }
-    }
-  });
+	// If user presses Enter, optionally pick the top suggestion
+	cityInput.addEventListener("keypress", (e) => {
+		if (e.key === "Enter") {
+			const firstLi = suggestions.querySelector("li");
+			if (firstLi) {
+				pickSuggestion(firstLi.dataset.cityId);
+			}
+		}
+	});
 
-  // If user clicks on a suggestion <li>
-  suggestions.addEventListener("click", (e) => {
-    if (e.target.tagName.toLowerCase() === "li") {
-      pickSuggestion(e.target.dataset.cityId);
-    }
-  });
+	// If user clicks on a suggestion <li>
+	suggestions.addEventListener("click", (e) => {
+		if (e.target.tagName.toLowerCase() === "li") {
+			pickSuggestion(e.target.dataset.cityId);
+		}
+	});
 });
 
 /**
@@ -85,37 +85,35 @@ document.addEventListener("DOMContentLoaded", () => {
  *  - Display cityName, admin1, country
  */
 function showSuggestions(query) {
-  const suggestionsEl = document.getElementById("suggestions");
+	const suggestionsEl = document.getElementById("suggestions");
 
-  // Filter by city.name that starts with the typed query
-  const matches = citiesData.filter((city) =>
-    city.name.toLowerCase().startsWith(query)
-  );
+	// Filter by city.name that starts with the typed query
+	const matches = citiesData.filter((city) => city.name.toLowerCase().startsWith(query));
 
-  // Limit to top 10
-  const top10 = matches.slice(0, 10);
+	// Limit to top 10
+	const top10 = matches.slice(0, 10);
 
-  // Build the HTML list
-  let html = "";
-  top10.forEach((city) => {
-    const cityName = city.name || "";
-    const admin1 = city.admin1 || "";
-    const country = city.country || "";
+	// Build the HTML list
+	let html = "";
+	top10.forEach((city) => {
+		const cityName = city.name || "";
+		const admin1 = city.admin1 || "";
+		const country = city.country || "";
 
-    // Example: "Rio de Janeiro, RJ, BR" or "New York, NY, US"
-    const display = [
-      cityName,
-      admin1 && admin1 !== cityName ? admin1 : null,
-      country && country !== cityName ? country : null
-    ]
-      .filter(Boolean) // remove null/empty
-      .join(", ");
+		// Example: "Rio de Janeiro, RJ, BR" or "New York, NY, US"
+		const display = [
+			cityName,
+			admin1 && admin1 !== cityName ? admin1 : null,
+			country && country !== cityName ? country : null,
+		]
+			.filter(Boolean) // remove null/empty
+			.join(", ");
 
-    html += `<li data-city-id="${city.id}">${display}</li>`;
-  });
+		html += `<li data-city-id="${city.id}">${display}</li>`;
+	});
 
-  // Insert into #suggestions
-  suggestionsEl.innerHTML = html;
+	// Insert into #suggestions
+	suggestionsEl.innerHTML = html;
 }
 
 /**
@@ -125,14 +123,14 @@ function showSuggestions(query) {
  *  - Clear input, suggestions
  */
 function pickSuggestion(cityId) {
-  if (!chosenCityIds.includes(cityId)) {
-    chosenCityIds.push(cityId);
-    localStorage.setItem("chosenCityIds", JSON.stringify(chosenCityIds));
-    drawCityMarker(cityId);
-  }
-  // Clear input and suggestion list
-  document.getElementById("cityInput").value = "";
-  document.getElementById("suggestions").innerHTML = "";
+	if (!chosenCityIds.includes(cityId)) {
+		chosenCityIds.push(cityId);
+		localStorage.setItem("chosenCityIds", JSON.stringify(chosenCityIds));
+		drawCityMarker(cityId);
+	}
+	// Clear input and suggestion list
+	document.getElementById("cityInput").value = "";
+	document.getElementById("suggestions").innerHTML = "";
 }
 
 /**
@@ -142,34 +140,34 @@ function pickSuggestion(cityId) {
  *  - Create a red dot at (x, y)
  */
 function drawCityMarker(cityId) {
-  const city = citiesData.find((c) => c.id === cityId);
-  if (!city) return;
+	const city = citiesData.find((c) => c.id === cityId);
+	if (!city) return;
 
-  const lat = parseFloat(city.lat);
-  const lon = parseFloat(city.lon);
+	const lat = parseFloat(city.lat);
+	const lon = parseFloat(city.lon);
 
-  // Equirectangular conversion
-  let x = ((lon - LEFT_LON) / (RIGHT_LON - LEFT_LON)) * MAP_WIDTH;
-  let y = ((TOP_LAT - lat) / (TOP_LAT - BOTTOM_LAT)) * MAP_HEIGHT;
+	// Equirectangular conversion
+	let x = ((lon - LEFT_LON) / (RIGHT_LON - LEFT_LON)) * MAP_WIDTH;
+	let y = ((TOP_LAT - lat) / (TOP_LAT - BOTTOM_LAT)) * MAP_HEIGHT;
 
-  // Apply small shift
-  x += SHIFT_X;
-  y -= SHIFT_Y; // subtract SHIFT_Y to move up
+	// Apply small shift
+	x += SHIFT_X;
+	y -= SHIFT_Y; // subtract SHIFT_Y to move up
 
-  // Create marker
-  const marker = document.createElement("div");
-  marker.className = "city-marker";
-  marker.title = city.name; // or the full "city, admin1, country"
+	// Create marker
+	const marker = document.createElement("div");
+	marker.className = "city-marker";
+	marker.title = city.name; // or the full "city, admin1, country"
 
-  // Position the marker
-  marker.style.left = x + "px";
-  marker.style.top = y + "px";
+	// Position the marker
+	marker.style.left = x + "px";
+	marker.style.top = y + "px";
 
-  // Add to the overlay
-  mapOverlay.appendChild(marker);
+	// Add to the overlay
+	mapOverlay.appendChild(marker);
 }
 
 // Initialize the map after the DOM is fully loaded
 document.addEventListener("DOMContentLoaded", function () {
-  initWorldMap("world-map", "../data/cities.json");
+	initWorldMap("world-map", "../data/cities.json");
 });

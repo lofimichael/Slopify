@@ -28,13 +28,7 @@ interface CreateCustomerProps {
 	patientId: string;
 }
 
-export async function createCustomer({
-	fullName,
-	email,
-	address,
-	shipping,
-	patientId,
-}: CreateCustomerProps) {
+export async function createCustomer({ fullName, email, address, shipping, patientId }: CreateCustomerProps) {
 	const customer = await stripe.customers.create({
 		name: fullName,
 		email: email || undefined,
