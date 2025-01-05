@@ -47,6 +47,7 @@ jobs:
             ! -name 'LICENSE.md' \
             ! -name '.gitignore' \
             ! -path './.slopify-s*' \
+            ! -name 'SlopifyLogo.png' \
             ! -name '.' \
             ! -name '..' \
             -exec mv {} "$SEASON_FOLDER/" \;
