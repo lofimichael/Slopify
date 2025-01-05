@@ -17,7 +17,7 @@ if [ "$1" = "--fresh" ]; then
 
         # Re-init git and set remote
         git init
-        git remote add origin https://github.com/lofimichael/Slopify.git
+        git remote add origin https://github.com/DishpitDev/Slopify.git
 
         # Fetch everything fresh
         echo "📡 Fetching fresh copy..."
