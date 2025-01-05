@@ -26,9 +26,9 @@ jobs:
           # Find the highest existing season number
           LAST_SEASON=$(find . -maxdepth 1 -name '.slopify-s*' | grep -o 's[0-9]*' | grep -o '[0-9]*' | sort -n | tail -n 1)
           
-          # If no seasons exist, start with 1, otherwise increment
+          # If no seasons exist, start with 0, otherwise increment
           if [ -z "$LAST_SEASON" ]; then
-            NEXT_SEASON=1
+            NEXT_SEASON=0
           else
             NEXT_SEASON=$((LAST_SEASON + 1))
           fi
