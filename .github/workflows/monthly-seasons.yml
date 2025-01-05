@@ -1,0 +1,50 @@
+name: Monthly Season Archive
+
+on:
+  schedule:
+    # Run at 00:00 on the 1st of every month
+    - cron: '0 0 1 * *'
+  # Allow manual triggering for testing
+  workflow_dispatch:
+
+jobs:
+  archive-season:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+      
+      - name: Create new season folder and move files
+        run: |
+          # Get current date for season naming
+          SEASON_DATE=$(date +"%Y-%m")
+          SEASON_FOLDER=".slopify-s1-${SEASON_DATE}"
+          
+          # Create season folder
+          mkdir -p "$SEASON_FOLDER"
+          
+          # Move all files/folders except excluded ones
+          find . -maxdepth 1 \
+            ! -name '.git' \
+            ! -name '.github' \
+            ! -name 'README.md' \
+            ! -name 'LICENSE.md' \
+            ! -name '.gitignore' \
+            ! -path './.slopify-s*' \
+            ! -name '.' \
+            ! -name '..' \
+            -exec mv {} "$SEASON_FOLDER/" \;
+          
+          # Add all changes and commit
+          git add -A
+          git commit -m "Archive season: ${SEASON_DATE} and prepare new season"
+          
+          # Push changes
+          git push origin HEAD 
