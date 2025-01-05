@@ -25,7 +25,19 @@ jobs:
         run: |
           # Get current date for season naming
           SEASON_DATE=$(date +"%Y-%m")
-          SEASON_FOLDER=".slopify-s1-${SEASON_DATE}"
+          
+          # Find the highest existing season number
+          LAST_SEASON=$(find . -maxdepth 1 -name '.slopify-s*' | grep -o 's[0-9]*' | grep -o '[0-9]*' | sort -n | tail -n 1)
+          
+          # If no seasons exist, start with 1, otherwise increment
+          if [ -z "$LAST_SEASON" ]; then
+            NEXT_SEASON=1
+          else
+            NEXT_SEASON=$((LAST_SEASON + 1))
+          fi
+          
+          SEASON_FOLDER=".slopify-s${NEXT_SEASON}-${SEASON_DATE}"
+          echo "Creating new season folder: $SEASON_FOLDER"
           
           # Create season folder
           mkdir -p "$SEASON_FOLDER"
@@ -44,7 +56,7 @@ jobs:
           
           # Add all changes and commit
           git add -A
-          git commit -m "Archive season: ${SEASON_DATE} and prepare new season"
+          git commit -m "Archive season ${NEXT_SEASON}: ${SEASON_DATE} and prepare new season"
           
           # Push changes
           git push origin HEAD 
