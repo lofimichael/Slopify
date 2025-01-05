@@ -1,0 +1,61 @@
+name: Monthly Season Archive
+
+on:
+  schedule:
+    # Run at 00:00 on the 1st of every month
+    - cron: '0 0 1 * *'
+  # Allow manual triggering -- DISHPIT, REMOVE THIS LINE RIGHT AFTERYOU MERGE/RUN THIS WORKFLOW INITIALLY
+  workflow_dispatch:
+  # Allow manual triggering -- DISHPIT, REMOVE THIS LINE RIGHT AFTER YOU MERGE/RUN THIS WORKFLOW INITIALLY
+
+jobs:
+  archive-season:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+      
+      - name: Create new season folder and move files
+        run: |
+          # Find the highest existing season number
+          LAST_SEASON=$(find . -maxdepth 1 -name '.slopify-s*' | grep -o 's[0-9]*' | grep -o '[0-9]*' | sort -n | tail -n 1)
+          
+          # If no seasons exist, start with 0, otherwise increment
+          if [ -z "$LAST_SEASON" ]; then
+            NEXT_SEASON=0
+          else
+            NEXT_SEASON=$((LAST_SEASON + 1))
+          fi
+          
+          SEASON_FOLDER=".slopify-s${NEXT_SEASON}"
+          echo "Creating new season folder: $SEASON_FOLDER"
+          
+          # Create season folder
+          mkdir -p "$SEASON_FOLDER"
+          
+          # Move all files/folders except excluded ones
+          find . -maxdepth 1 \
+            ! -name '.git' \
+            ! -name '.github' \
+            ! -name 'README.md' \
+            ! -name 'LICENSE.md' \
+            ! -name '.gitignore' \
+            ! -path './.slopify-s*' \
+            ! -name 'SlopifyLogo.png' \
+            ! -name '.' \
+            ! -name '..' \
+            -exec mv {} "$SEASON_FOLDER/" \;
+          
+          # Add all changes and commit
+          git add -A
+          git commit -m "Archive season ${LAST_SEASON} and prepare season ${NEXT_SEASON}"
+          
+          # Push changes
+          git push origin HEAD 
