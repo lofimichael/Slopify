@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# Check if --nuke flag is passed
-if [ "$1" = "--nuke" ]; then
-    echo "☢️  NUKE MODE ACTIVATED ☢️"
+# Check if --fresh flag is passed
+if [ "$1" = "--fresh" ]; then
+    echo "🌱 FRESH START MODE ACTIVATED 🌱"
     echo "⚠️  This will delete ALL local files and get a fresh copy!"
     echo "Are you sure? (y/N)"
     read -r response
     if [[ "$response" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
-        echo "🧨 Nuking local repository..."
+        echo "🧹 Cleaning local repository..."
 
         # Store the current branch name before cleaning
         CURRENT_BRANCH=$(git branch --show-current)
@@ -26,15 +26,17 @@ if [ "$1" = "--nuke" ]; then
         # Reset to remote state
         git reset --hard origin/$CURRENT_BRANCH
 
-        echo "💫 Repository has been reset to a clean state!"
+        echo "✨ Repository has been reset to a pristine state!"
         exit 0
     else
-        echo "Nuke cancelled!"
+        echo "Fresh start cancelled!"
         exit 0
     fi
 fi
 
 echo "🎵 Syncing Slopify with remote repository..."
+echo "   Hint: Use --fresh flag to completely reset your local copy to the latest upstream state"
+echo "   Example: ./sync-slopify.sh --fresh"
 
 # Store the current branch name
 CURRENT_BRANCH=$(git branch --show-current)
