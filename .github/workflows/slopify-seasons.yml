@@ -4,9 +4,6 @@ on:
   schedule:
     # Run at 00:00 on the 1st of every month
     - cron: '0 0 1 * *'
-  # Allow manual triggering -- DISHPIT, REMOVE THIS LINE RIGHT AFTERYOU MERGE/RUN THIS WORKFLOW INITIALLY
-  workflow_dispatch:
-  # Allow manual triggering -- DISHPIT, REMOVE THIS LINE RIGHT AFTER YOU MERGE/RUN THIS WORKFLOW INITIALLY
 
 jobs:
   archive-season:
