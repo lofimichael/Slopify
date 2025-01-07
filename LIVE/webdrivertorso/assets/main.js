@@ -1,4 +1,3 @@
-
 let vol = new Tone.Volume(-12).toDestination();
 
 let redOsc = new Tone.Oscillator({
@@ -25,28 +24,28 @@ function changeFreqs() {
 }
 
 function randomiseRect(classname) {
-  var rect = document.querySelector('.' + classname);
+  var rect = document.querySelector("." + classname);
   if (!rect) {
     console.warn(`Element with class ${classname} not found`);
     return;
   }
-  var rect = document.querySelector('.' + classname);
+  var rect = document.querySelector("." + classname);
   let xpos = randomFloat(0, window.innerWidth);
   let ypos = randomFloat(0, window.innerHeight);
   let width = randomFloat(1, window.innerWidth - xpos);
   let height = randomFloat(1, window.innerHeight - ypos);
 
-  let st = `top:${ypos}px;left:${xpos}px;width:${width}px;height:${height}px;`; 
-  rect.setAttribute('style', st);
+  let st = `top:${ypos}px;left:${xpos}px;width:${width}px;height:${height}px;`;
+  rect.setAttribute("style", st);
 }
 
 function randomiseRects() {
-  randomiseRect('red');
-  randomiseRect('blue');
+  randomiseRect("red");
+  randomiseRect("blue");
 }
 
 function syncAudioAndVisual() {
-  changeFreqs(); 
+  changeFreqs();
   randomiseRects();
 }
 
@@ -54,21 +53,20 @@ const mainloop = new Tone.Loop((time) => {
   syncAudioAndVisual();
 }, "1b").start(0);
 
-document.addEventListener('DOMContentLoaded', function () {
-
+document.addEventListener("DOMContentLoaded", function () {
   // i fucking hate the interaction requierment for autoplay stuff ,its so annoying IDC if it improves user experience i want stuff to play wheneveri want it to play!!!!!!!!!
-  var p = document.querySelector('p')
+  var p = document.querySelector("p");
 
   document.addEventListener("click", () => {
     p.remove();
-    Tone.start(); 
+    Tone.start();
     redOsc.start();
     blueOsc.start();
     Tone.getTransport().start();
   });
 });
 
-window.addEventListener('unload', () => {
+window.addEventListener("unload", () => {
   redOsc.stop();
   blueOsc.stop();
   Tone.getTransport().stop();
