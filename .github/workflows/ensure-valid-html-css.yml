@@ -76,44 +76,35 @@ jobs:
           echo "## HTML Validation Results" >> $GITHUB_STEP_SUMMARY
           
           if [ -f validation/errors.json ]; then
-            # Parse and format the validation results
-            REPORT=$(jq -r '
-              def format_messages:
-                group_by(.filepath) |
-                map({
-                  filepath: .[0].filepath,
-                  messages: map(select(.type == "error" or (type == "info" and .subType == "warning")))
-                }) |
-                map(select(.messages | length > 0));
+            # First, get the count of issues
+            ISSUE_COUNT=$(jq '[.messages[] | select(.type == "error" or (type == "info" and .subType == "warning"))] | length' validation/errors.json)
+            
+            if [ "$ISSUE_COUNT" -gt 0 ]; then
+              echo "❌ Validation found the following issues:" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
               
-              .messages | format_messages | if length > 0 then
-                "❌ Validation found the following issues:\n\n" +
-                map(
-                  "### " + .filepath + "\n\n" +
-                  (.messages | group_by(.message) | map(
-                    ([.[0].type == "error"][0] | if . then "🔴" else "⚠️" end) +
-                    " **Line" + (
-                      if length == 1 then
-                        " " + (.[0].lastLine | tostring)
-                      else
-                        "s " + (map(.lastLine) | sort | join(", "))
-                      end
-                    ) +
-                    ":** " + .[0].message + "\n\n"
-                  ) | join(""))
-                | join("\n")
-              else
-                "✅ All HTML and CSS validates successfully!"
-              end
-            ' validation/errors.json)
-            
-            echo "$REPORT" >> $GITHUB_STEP_SUMMARY
-            
-            # Set error annotation for each issue
-            jq -r '.messages[] | 
-              select(.type == "error" or (type == "info" and .subType == "warning")) |
-              "::error file=\(.filepath),line=\(.lastLine)::\(.message)"
-            ' validation/errors.json || true
+              # Process each file's errors separately to avoid complex jq
+              jq -r '.messages[] | select(.type == "error" or (type == "info" and .subType == "warning")) | 
+                "\(.filepath)\t\(.type)\t\(.lastLine)\t\(.message)"' validation/errors.json | 
+              while IFS=$'\t' read -r filepath type line message; do
+                if [ "$type" = "error" ]; then
+                  ICON="🔴"
+                else
+                  ICON="⚠️"
+                fi
+                echo "### $filepath" >> $GITHUB_STEP_SUMMARY
+                echo "" >> $GITHUB_STEP_SUMMARY
+                echo "$ICON **Line $line:** $message" >> $GITHUB_STEP_SUMMARY
+                echo "" >> $GITHUB_STEP_SUMMARY
+                
+                # Create GitHub annotation
+                echo "::error file=$filepath,line=$line::$message"
+              done
+              
+              echo "Please fix these issues before merging." >> $GITHUB_STEP_SUMMARY
+            else
+              echo "✅ All HTML and CSS validates successfully!" >> $GITHUB_STEP_SUMMARY
+            fi
           else
             echo "✅ No files were validated" >> $GITHUB_STEP_SUMMARY
           fi
