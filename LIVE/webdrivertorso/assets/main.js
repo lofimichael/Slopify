@@ -16,7 +16,7 @@ function randomFloat(from, to) {
 }
 
 function changeFreq(osc) {
-  osc.frequency.rampTo(randomFloat(100, 1000), 0); // Smooth frequency changes
+  osc.frequency.rampTo(randomFloat(100, 1000), 0);
 }
 
 function changeFreqs() {
@@ -36,7 +36,7 @@ function randomiseRect(classname) {
   let width = randomFloat(1, window.innerWidth - xpos);
   let height = randomFloat(1, window.innerHeight - ypos);
 
-  let st = `top:${ypos}px;left:${xpos}px;width:${width}px;height:${height}px;`; // Fixed CSS style
+  let st = `top:${ypos}px;left:${xpos}px;width:${width}px;height:${height}px;`; 
   rect.setAttribute('style', st);
 }
 
@@ -46,21 +46,22 @@ function randomiseRects() {
 }
 
 function syncAudioAndVisual() {
-  changeFreqs(); // Fixed typo
+  changeFreqs(); 
   randomiseRects();
 }
 
 const mainloop = new Tone.Loop((time) => {
-  syncAudioAndVisual(); // Trigger sync function
+  syncAudioAndVisual();
 }, "1b").start(0);
 
 document.addEventListener('DOMContentLoaded', function () {
-  // Create a start button
+
+  // i fucking hate the interaction requierment for autoplay stuff ,its so annoying IDC if it improves user experience i want stuff to play wheneveri want it to play!!!!!!!!!
   var p = document.querySelector('p')
 
   document.addEventListener("click", () => {
     p.remove();
-    Tone.start(); // This needs user interaction
+    Tone.start(); 
     redOsc.start();
     blueOsc.start();
     Tone.getTransport().start();
