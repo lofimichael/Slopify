@@ -1,0 +1,120 @@
+name: HTML and CSS Validation
+
+on:
+  pull_request:
+    paths:
+      - '**/*.html'
+      - '**/*.htm'
+      - '**/*.xhtml'
+      - '**/*.xht'
+
+jobs:
+  validate-html:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changed files
+        id: changed-files
+        run: |
+          FILES=$(git diff --name-only origin/${{ github.base_ref }} ${{ github.sha }} | grep -E '\.(html|htm|xhtml|xht|css)$' || true)
+          echo "$FILES" > changed_files.txt
+          if [ -s changed_files.txt ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set up Java
+        if: steps.changed-files.outputs.has_changes == 'true'
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Download vnu.jar
+        if: steps.changed-files.outputs.has_changes == 'true'
+        run: |
+          wget -O vnu.jar https://github.com/validator/validator/releases/download/latest/vnu.jar
+
+      - name: Validate HTML and CSS
+        if: steps.changed-files.outputs.has_changes == 'true'
+        id: validation
+        continue-on-error: true
+        run: |
+          mkdir -p validation
+          echo '{"messages":[]}' > validation/errors.json
+          
+          TEMP_LOG="validation/temp.json"
+          ALL_ERRORS="validation/errors.json"
+          
+          while IFS= read -r file; do
+            if [ -f "$file" ]; then
+              echo "Validating file: $file"
+              java -jar vnu.jar --format json --also-check-css "$file" > "$TEMP_LOG" 2>&1 || true
+              
+              if [ -f "$TEMP_LOG" ] && [ -s "$TEMP_LOG" ]; then
+                jq --arg filepath "$file" '.messages = (.messages | map(. + {"filepath": $filepath}))' "$TEMP_LOG" > "validation/temp_with_path.json"
+                jq -s '.[0].messages + .[1].messages | {messages: .}' "$ALL_ERRORS" "validation/temp_with_path.json" > "validation/combined.json"
+                mv "validation/combined.json" "$ALL_ERRORS"
+              fi
+            fi
+          done < changed_files.txt
+          
+          ISSUES=$(jq '[.messages[] | select(.type == "error" or (type == "info" and .subType == "warning"))] | length' "$ALL_ERRORS")
+          if [ "$ISSUES" -gt 0 ]; then
+            echo "has_errors=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_errors=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate validation report
+        if: steps.changed-files.outputs.has_changes == 'true'
+        run: |
+          echo "## HTML Validation Results" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f validation/errors.json ]; then
+            # First, get the count of issues
+            ISSUE_COUNT=$(jq '[.messages[] | select(.type == "error" or (type == "info" and .subType == "warning"))] | length' validation/errors.json)
+            
+            if [ "$ISSUE_COUNT" -gt 0 ]; then
+              echo "❌ Validation found the following issues:" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              
+              # Process each file's errors separately to avoid complex jq
+              jq -r '.messages[] | select(.type == "error" or (type == "info" and .subType == "warning")) | 
+                "\(.filepath)\t\(.type)\t\(.lastLine)\t\(.message)"' validation/errors.json | 
+              while IFS=$'\t' read -r filepath type line message; do
+                if [ "$type" = "error" ]; then
+                  ICON="🔴"
+                else
+                  ICON="⚠️"
+                fi
+                echo "### $filepath" >> $GITHUB_STEP_SUMMARY
+                echo "" >> $GITHUB_STEP_SUMMARY
+                echo "$ICON **Line $line:** $message" >> $GITHUB_STEP_SUMMARY
+                echo "" >> $GITHUB_STEP_SUMMARY
+                
+                # Create GitHub annotation
+                echo "::error file=$filepath,line=$line::$message"
+              done
+              
+              echo "Please fix these issues before merging." >> $GITHUB_STEP_SUMMARY
+            else
+              echo "✅ All HTML and CSS validates successfully!" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "✅ No files were validated" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Exit with error if validation failed
+        if: steps.validation.outputs.has_errors == 'true'
+        run: |
+          if [ -f validation/errors.json ]; then
+            ERRORS=$(jq '[.messages[] | select(.type == "error")] | length' validation/errors.json)
+            if [ "$ERRORS" -gt 0 ]; then
+              exit 1
+            fi
+          fi
